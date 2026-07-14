@@ -3,9 +3,9 @@ import type { Room, ToggleKind } from './config';
 export type Rec =
   | { id: string; at: number; kind: 'meal' | 'litter'; room: Room; note?: string; alert?: boolean }
   | { id: string; at: number; kind: 'med' | 'memo'; room: null; note?: string; alert?: boolean }
-  | { id: string; at: number; kind: 'window' | 'stove'; room: Room; toggleValue: boolean };
+  | { id: string; at: number; kind: ToggleKind; room: Room; toggleValue: boolean };
 
-export type ToggleRec = Extract<Rec, { kind: 'window' | 'stove' }>;
+export type ToggleRec = Extract<Rec, { kind: ToggleKind }>;
 
 export interface ToggleState {
   room: Room;

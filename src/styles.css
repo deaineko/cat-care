@@ -1,42 +1,37 @@
 :root {
-  --bg: #fbf6ec;
-  --surface: #fffdf8;
-  --surface-2: #f3ede0;
-  --text: #2c2a26;
-  --text-sub: #6b665c;
-  --text-faint: #9a9488;
-  --border: rgba(0, 0, 0, 0.1);
-  --border-2: rgba(0, 0, 0, 0.18);
-  --shadow: 0 1px 2px rgba(80, 60, 20, 0.06), 0 6px 16px rgba(80, 60, 20, 0.06);
+  --bg: #f0e9db;
+  --surface: #ffffff;
+  --surface-2: #fbf3e7;
+  --text: #4d4d4d;
+  --text-sub: #a08b6e;
+  --text-faint: #c4b296;
+  --border: rgba(160, 139, 110, 0.15);
+  --border-2: rgba(160, 139, 110, 0.28);
+  --shadow: 0 2px 8px rgba(90, 60, 20, 0.07);
 
-  --header-bg: #faeeda;
-  --accent: #9a5e12;
+  --header-bg: #f0e9db;
+  --accent: #ff6b00;
 
-  --btn-bg: #faeeda;
-  --btn-ink: #854f0b;
-  --btn-edge: #f0d9a8;
+  --btn-bg: #fdf8ef;
+  --btn-ink: #a08b6e;
+  --btn-edge: #efe4d0;
 
-  --tg-off-bg: #fffdf8;
-  --tg-off-knob: #a8a496;
-  --tg-off-text: #9a9488;
-  --tg-off-edge: rgba(0, 0, 0, 0.18);
+  --tg-off-bg: #ffffff;
+  --tg-off-knob: #c4b296;
+  --tg-off-text: #c4b296;
+  --tg-off-edge: #e3d8c3;
 
-  --tg-win-bg: #faeeda;
-  --tg-win-knob: #ba7517;
-  --tg-win-text: #854f0b;
-  --tg-win-edge: #ef9f27;
-
-  --tg-stv-bg: #faece7;
-  --tg-stv-knob: #d85a30;
-  --tg-stv-text: #993c1d;
-  --tg-stv-edge: #d85a30;
+  --tg-on-bg: #fdebdd;
+  --tg-on-knob: #ff6b00;
+  --tg-on-text: #ff6b00;
+  --tg-on-edge: #ff6b00;
 
   --alert-bg: #f7c1c1;
   --alert-ink: #791f1f;
 
-  --radius-lg: 16px;
-  --radius-md: 12px;
-  --radius-sm: 8px;
+  --radius-lg: 22px;
+  --radius-md: 14px;
+  --radius-sm: 10px;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -45,33 +40,28 @@
     --surface: #262219;
     --surface-2: #2f2a20;
     --text: #f2ece0;
-    --text-sub: #b9b1a2;
+    --text-sub: #cbb98f;
     --text-faint: #8a8273;
     --border: rgba(255, 255, 255, 0.12);
     --border-2: rgba(255, 255, 255, 0.2);
     --shadow: none;
 
-    --header-bg: #3a2d17;
-    --accent: #f0c97a;
+    --header-bg: #262219;
+    --accent: #ff8a3d;
 
-    --btn-bg: #3a2e18;
-    --btn-ink: #f2ce86;
-    --btn-edge: #5a4824;
+    --btn-bg: #2f2a20;
+    --btn-ink: #cbb98f;
+    --btn-edge: #4a3f2a;
 
     --tg-off-bg: #2f2a20;
     --tg-off-knob: #6e685c;
     --tg-off-text: #8a8273;
     --tg-off-edge: rgba(255, 255, 255, 0.2);
 
-    --tg-win-bg: #4a3a1c;
-    --tg-win-knob: #e4b45c;
-    --tg-win-text: #f0c97a;
-    --tg-win-edge: #7a5e22;
-
-    --tg-stv-bg: #4a2a1e;
-    --tg-stv-knob: #e8855e;
-    --tg-stv-text: #f0a586;
-    --tg-stv-edge: #8a4326;
+    --tg-on-bg: #4a2e14;
+    --tg-on-knob: #ff8a3d;
+    --tg-on-text: #ff8a3d;
+    --tg-on-edge: #ff8a3d;
 
     --alert-bg: #5a2020;
     --alert-ink: #f4b5b5;
@@ -88,8 +78,8 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP",
-    system-ui, sans-serif;
+  font-family: "Zen Maru Gothic", "Hiragino Maru Gothic ProN", -apple-system,
+    BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif;
   font-size: 16px;
   line-height: 1.6;
 }
@@ -98,6 +88,11 @@ body {
   max-width: 480px;
   margin: 0 auto;
   padding-bottom: 96px;
+}
+
+.icon {
+  display: block;
+  flex: none;
 }
 
 /* ---- header ---- */
@@ -119,21 +114,30 @@ body {
   align-items: center;
   gap: 8px;
   font-size: 19px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--accent);
 }
-.hd-title .em {
-  font-size: 24px;
+.hd-title .icon {
+  width: 28px;
+  height: 28px;
+}
+.hd-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
 }
 .icon-btn {
   border: none;
   background: transparent;
   color: var(--accent);
-  font-size: 22px;
   padding: 6px;
   cursor: pointer;
   border-radius: var(--radius-sm);
   line-height: 1;
+}
+.icon-btn .icon {
+  width: 22px;
+  height: 22px;
 }
 .icon-btn:active {
   transform: scale(0.94);
@@ -162,12 +166,12 @@ body {
 }
 .datenav .label {
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 700;
 }
 .datenav .today-back {
   font-size: 13px;
-  font-weight: 600;
-  border: 0.5px solid var(--tg-win-edge);
+  font-weight: 700;
+  border: 0.5px solid var(--tg-on-edge);
   background: transparent;
   color: var(--accent);
   border-radius: 999px;
@@ -203,7 +207,7 @@ body {
 }
 .card-title {
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-sub);
   margin: 0 0 12px;
 }
@@ -212,13 +216,18 @@ body {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
 }
+.grid3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
 
 /* toggle */
 .tg {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 10px 12px;
+  padding: 10px 8px;
   border-radius: var(--radius-md);
   border: 0.5px solid var(--border);
   background: var(--surface-2);
@@ -229,16 +238,17 @@ body {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 13px;
+  font-size: 12.5px;
   color: var(--text-sub);
 }
-.tg-label .em {
-  font-size: 16px;
+.tg-label .icon {
+  width: 18px;
+  height: 18px;
 }
 .tg-row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 .track {
   width: 42px;
@@ -260,31 +270,20 @@ body {
   transition: transform 0.16s ease;
 }
 .tg-word {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 700;
   color: var(--tg-off-text);
 }
-.tg[data-on="true"][data-kind="window"] .track {
-  background: var(--tg-win-bg);
-  border-color: var(--tg-win-edge);
+.tg[data-on="true"] .track {
+  background: var(--tg-on-bg);
+  border-color: var(--tg-on-edge);
   justify-content: flex-end;
 }
-.tg[data-on="true"][data-kind="window"] .knob {
-  background: var(--tg-win-knob);
+.tg[data-on="true"] .knob {
+  background: var(--tg-on-knob);
 }
-.tg[data-on="true"][data-kind="window"] .tg-word {
-  color: var(--tg-win-text);
-}
-.tg[data-on="true"][data-kind="stove"] .track {
-  background: var(--tg-stv-bg);
-  border-color: var(--tg-stv-edge);
-  justify-content: flex-end;
-}
-.tg[data-on="true"][data-kind="stove"] .knob {
-  background: var(--tg-stv-knob);
-}
-.tg[data-on="true"][data-kind="stove"] .tg-word {
-  color: var(--tg-stv-text);
+.tg[data-on="true"] .tg-word {
+  color: var(--tg-on-text);
 }
 
 /* record buttons */
@@ -303,9 +302,13 @@ body {
   color: var(--btn-ink);
   border: 0.5px solid var(--btn-edge);
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: transform 0.08s;
+}
+.btn .icon {
+  width: 26px;
+  height: 26px;
 }
 .btn .em {
   font-size: 22px;
@@ -314,9 +317,9 @@ body {
   transform: scale(0.97);
 }
 .btn.flash {
-  background: var(--tg-win-knob);
+  background: var(--tg-on-knob);
   color: #fff;
-  border-color: var(--tg-win-knob);
+  border-color: var(--tg-on-knob);
 }
 
 .last {
@@ -328,7 +331,7 @@ body {
   color: var(--text-faint);
 }
 .last b {
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-sub);
 }
 
@@ -338,13 +341,13 @@ body {
 }
 .history-title {
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-sub);
   margin: 16px 2px 12px;
 }
 .hsec-label {
   font-size: 12.5px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-faint);
   margin: 0 2px 5px;
 }
@@ -395,7 +398,7 @@ body {
   color: var(--alert-ink);
   padding: 2px 7px;
   border-radius: 6px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 /* ---- toast ---- */
@@ -432,7 +435,7 @@ body {
   border-radius: var(--radius-sm);
   padding: 6px 12px;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
 }
@@ -456,7 +459,7 @@ body {
 .sheet h3 {
   margin: 0 0 14px;
   font-size: 17px;
-  font-weight: 600;
+  font-weight: 700;
 }
 .sheet textarea {
   width: 100%;
@@ -470,7 +473,7 @@ body {
   padding: 11px 12px;
 }
 .sheet textarea:focus {
-  outline: 2px solid var(--tg-win-edge);
+  outline: 2px solid var(--tg-on-edge);
   outline-offset: 0;
 }
 .alert-toggle {
@@ -496,11 +499,11 @@ body {
 .alert-toggle .at-text {
   flex: 1;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
 }
 .alert-toggle .at-state {
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   opacity: 0.8;
 }
 .sheet-actions {
@@ -513,7 +516,7 @@ body {
   min-height: 48px;
   border-radius: var(--radius-md);
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   border: 0.5px solid var(--border-2);
   background: var(--surface);

@@ -46,12 +46,17 @@ function dateLabel(): string {
   return offset === 0 ? `${base}今日` : base;
 }
 
+function iconHtml(name: string, size: number): string {
+  return `<img class="icon" src="icons/ui/${name}.svg" alt="" width="${size}" height="${size}">`;
+}
+
 function toggleHtml(room: Room, kind: ToggleKind): string {
   const on = toggles[`${room}:${kind}`] ?? false;
   const word = kind === 'window' ? (on ? '開' : '閉') : on ? '入' : '切';
+  const meta = KIND_META[kind];
   return `
-  <div class="tg" data-toggle="${room}:${kind}" data-kind="${kind}" data-on="${on}">
-    <div class="tg-label"><span class="em">${KIND_META[kind].em}</span>${KIND_META[kind].label}</div>
+  <div class="tg" data-toggle="${room}:${kind}" data-on="${on}">
+    <div class="tg-label">${iconHtml(meta.icon!, 18)}${meta.label}</div>
     <div class="tg-row">
       <span class="track"><span class="knob"></span></span>
       <span class="tg-word">${word}</span>
@@ -63,13 +68,12 @@ function roomCardHtml(room: Room): string {
   return `
   <div class="card">
     <p class="card-title">${ROOM_LABEL[room]}</p>
-    <div class="grid2">
-      ${toggleHtml(room, 'window')}
-      ${toggleHtml(room, 'stove')}
+    <div class="grid3">
+      ${TOGGLE_KINDS.map((kind) => toggleHtml(room, kind)).join('')}
     </div>
     <div class="grid2 recbtns">
-      <button class="btn" data-rec="${room}:meal"><span class="em">🍚</span>ごはん</button>
-      <button class="btn" data-rec="${room}:litter"><span class="em">🚽</span>トイレ掃除</button>
+      <button class="btn" data-rec="${room}:meal">${iconHtml(KIND_META.meal.icon!, 26)}ごはん</button>
+      <button class="btn" data-rec="${room}:litter">${iconHtml(KIND_META.litter.icon!, 26)}トイレ掃除</button>
     </div>
     <div class="last">🕐 最後のごはん <b>${lastTimeStr(records, room, 'meal', today)}</b> ・ トイレ <b>${lastTimeStr(records, room, 'litter', today)}</b></div>
   </div>`;
@@ -129,8 +133,10 @@ function render(): void {
   let html = `
   <div class="hd">
     <div class="hd-top">
-      <div class="hd-title"><span class="em">🐈</span>猫の世話</div>
-      <button class="icon-btn" data-settings aria-label="設定">⚙️</button>
+      <div class="hd-title">${iconHtml('icon-app', 28)}猫の世話</div>
+      <div class="hd-actions">
+        <button class="icon-btn" data-settings aria-label="設定">${iconHtml('icon-gear', 22)}</button>
+      </div>
     </div>
     <div class="datenav">
       <button class="nav" data-nav="prev" aria-label="前の日">‹</button>

@@ -6,18 +6,19 @@ export const ROOM_LABEL: Record<Room, string> = {
   upstairs: '2階',
 };
 
-export const KINDS = ['meal', 'litter', 'med', 'memo', 'window', 'stove'] as const;
+export const KINDS = ['meal', 'litter', 'med', 'memo', 'window', 'stove', 'fan'] as const;
 export type Kind = (typeof KINDS)[number];
-export type ToggleKind = 'window' | 'stove';
-export const TOGGLE_KINDS: ToggleKind[] = ['window', 'stove'];
+export type ToggleKind = 'window' | 'stove' | 'fan';
+export const TOGGLE_KINDS: ToggleKind[] = ['window', 'stove', 'fan'];
 
-export const KIND_META: Record<Kind, { em: string; label: string }> = {
-  meal: { em: '🍚', label: 'ごはん' },
-  litter: { em: '🚽', label: 'トイレ掃除' },
+export const KIND_META: Record<Kind, { em: string; label: string; icon?: string }> = {
+  meal: { em: '🍚', label: 'ごはん', icon: 'icon-meal' },
+  litter: { em: '🚽', label: 'トイレ掃除', icon: 'icon-toilet' },
   med: { em: '💊', label: '薬' },
   memo: { em: '📝', label: '自由メモ' },
-  window: { em: '🪟', label: '窓' },
-  stove: { em: '🔥', label: 'ストーブ' },
+  window: { em: '🪟', label: '窓', icon: 'icon-window' },
+  stove: { em: '🔥', label: 'ストーブ', icon: 'icon-stove' },
+  fan: { em: '🌀', label: '扇風機', icon: 'icon-fan' },
 };
 
 export const WEEK = ['日', '月', '火', '水', '木', '金', '土'] as const;
