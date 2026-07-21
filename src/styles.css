@@ -87,7 +87,7 @@ body {
 #app {
   max-width: 480px;
   margin: 0 auto;
-  padding-bottom: 96px;
+  padding-bottom: 40px;
 }
 
 .icon {
@@ -113,13 +113,13 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 19px;
+  font-size: 40px;
   font-weight: 700;
   color: var(--accent);
 }
 .hd-title .icon {
-  width: 28px;
-  height: 28px;
+  width: 80px;
+  height: 80px;
 }
 .hd-actions {
   display: flex;
@@ -136,8 +136,8 @@ body {
   line-height: 1;
 }
 .icon-btn .icon {
-  width: 22px;
-  height: 22px;
+  width: 48px;
+  height: 48px;
 }
 .icon-btn:active {
   transform: scale(0.94);
@@ -154,9 +154,9 @@ body {
   border: none;
   background: transparent;
   color: inherit;
-  font-size: 24px;
-  width: 40px;
-  height: 40px;
+  font-size: 48px;
+  width: 80px;
+  height: 80px;
   cursor: pointer;
   border-radius: var(--radius-sm);
 }
@@ -165,8 +165,11 @@ body {
   cursor: default;
 }
 .datenav .label {
-  font-size: 16px;
+  font-size: 32px;
   font-weight: 700;
+}
+.datenav .label-sub {
+  font-size: 24px;
 }
 .datenav .today-back {
   font-size: 13px;
@@ -206,7 +209,7 @@ body {
   margin-top: 14px;
 }
 .card-title {
-  font-size: 14px;
+  font-size: 24px;
   font-weight: 700;
   color: var(--text-sub);
   margin: 0 0 12px;
@@ -236,14 +239,16 @@ body {
 }
 .tg-label {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 6px;
-  font-size: 12.5px;
+  gap: 2px;
+  font-size: 18px;
   color: var(--text-sub);
+  white-space: nowrap;
 }
 .tg-label .icon {
-  width: 18px;
-  height: 18px;
+  width: 50px;
+  height: 50px;
 }
 .tg-row {
   display: flex;
@@ -301,7 +306,7 @@ body {
   background: var(--btn-bg);
   color: var(--btn-ink);
   border: 0.5px solid var(--btn-edge);
-  font-size: 15px;
+  font-size: 21px;
   font-weight: 700;
   cursor: pointer;
   transition: transform 0.08s;
@@ -321,16 +326,30 @@ body {
   color: #fff;
   border-color: var(--tg-on-knob);
 }
+.btn-icon {
+  flex-direction: row;
+  font-size: 24px;
+  min-height: 80px;
+}
+.btn-icon .icon {
+  width: 58px;
+  height: 58px;
+}
 
 .last {
   display: flex;
-  align-items: center;
-  gap: 6px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
   margin-top: 11px;
-  font-size: 12.5px;
+  font-size: 18px;
   color: var(--text-faint);
 }
+.last span {
+  margin-left: 60px;
+}
 .last b {
+  font-size: 21px;
   font-weight: 700;
   color: var(--text-sub);
 }
@@ -340,13 +359,13 @@ body {
   padding: 8px 16px 0;
 }
 .history-title {
-  font-size: 14px;
+  font-size: 24px;
   font-weight: 700;
   color: var(--text-sub);
   margin: 16px 2px 12px;
 }
 .hsec-label {
-  font-size: 12.5px;
+  font-size: 21px;
   font-weight: 700;
   color: var(--text-faint);
   margin: 0 2px 5px;
@@ -371,7 +390,7 @@ body {
   align-items: center;
   gap: 10px;
   padding: 9px 0;
-  font-size: 14.5px;
+  font-size: 21px;
   cursor: pointer;
 }
 .hrow + .hrow {
@@ -380,7 +399,7 @@ body {
 .hrow .tm {
   font-variant-numeric: tabular-nums;
   color: var(--text-faint);
-  font-size: 13px;
+  font-size: 21px;
   min-width: 44px;
 }
 .hrow .em {

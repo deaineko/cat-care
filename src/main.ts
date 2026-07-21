@@ -42,8 +42,8 @@ function selectedMid(): Date {
 }
 function dateLabel(): string {
   const d = selectedMid();
-  const base = `${d.getMonth() + 1}/${d.getDate()}（${WEEK[d.getDay()]}）`;
-  return offset === 0 ? `${base}今日` : base;
+  const sub = `（${WEEK[d.getDay()]}）${offset === 0 ? '今日' : ''}`;
+  return `${d.getMonth() + 1}/${d.getDate()}<span class="label-sub">${sub}</span>`;
 }
 
 function iconHtml(name: string, size: number): string {
@@ -56,7 +56,7 @@ function toggleHtml(room: Room, kind: ToggleKind): string {
   const meta = KIND_META[kind];
   return `
   <div class="tg" data-toggle="${room}:${kind}" data-on="${on}">
-    <div class="tg-label">${iconHtml(meta.icon!, 18)}${meta.label}</div>
+    <div class="tg-label">${iconHtml(meta.icon!, 50)}${meta.label}</div>
     <div class="tg-row">
       <span class="track"><span class="knob"></span></span>
       <span class="tg-word">${word}</span>
@@ -72,10 +72,13 @@ function roomCardHtml(room: Room): string {
       ${TOGGLE_KINDS.map((kind) => toggleHtml(room, kind)).join('')}
     </div>
     <div class="grid2 recbtns">
-      <button class="btn" data-rec="${room}:meal">${iconHtml(KIND_META.meal.icon!, 26)}ごはん</button>
-      <button class="btn" data-rec="${room}:litter">${iconHtml(KIND_META.litter.icon!, 26)}トイレ掃除</button>
+      <button class="btn btn-icon" data-rec="${room}:meal">${iconHtml(KIND_META.meal.icon!, 58)}ごはん</button>
+      <button class="btn btn-icon" data-rec="${room}:litter">${iconHtml(KIND_META.litter.icon!, 58)}トイレ掃除</button>
     </div>
-    <div class="last">🕐 最後のごはん <b>${lastTimeStr(records, room, 'meal', today)}</b> ・ トイレ <b>${lastTimeStr(records, room, 'litter', today)}</b></div>
+    <div class="last">
+      <span>🕐 最後のごはん <b>${lastTimeStr(records, room, 'meal', today)}</b></span>
+      <span>🕐 トイレ <b>${lastTimeStr(records, room, 'litter', today)}</b></span>
+    </div>
   </div>`;
 }
 
@@ -133,9 +136,9 @@ function render(): void {
   let html = `
   <div class="hd">
     <div class="hd-top">
-      <div class="hd-title">${iconHtml('icon-app', 28)}猫の世話</div>
+      <div class="hd-title">${iconHtml('icon-app', 80)}猫の世話</div>
       <div class="hd-actions">
-        <button class="icon-btn" data-settings aria-label="設定">${iconHtml('icon-gear', 22)}</button>
+        <button class="icon-btn" data-settings aria-label="設定">${iconHtml('icon-gear', 48)}</button>
       </div>
     </div>
     <div class="datenav">
