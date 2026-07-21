@@ -97,9 +97,6 @@ body {
 
 /* ---- header ---- */
 .hd {
-  position: sticky;
-  top: 0;
-  z-index: 5;
   background: var(--header-bg);
   padding: 14px 16px calc(14px + env(safe-area-inset-top));
   padding-top: max(14px, env(safe-area-inset-top));
