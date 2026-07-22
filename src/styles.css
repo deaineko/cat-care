@@ -118,6 +118,13 @@ body {
   width: 80px;
   height: 80px;
 }
+.hd-title-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  line-height: 1.05;
+  font-size: 34px;
+}
 .hd-actions {
   display: flex;
   align-items: center;
@@ -142,15 +149,22 @@ body {
 
 .datenav {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
+  gap: 6px;
   margin-top: 10px;
   color: var(--accent);
+}
+.datenav-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
 }
 .datenav .nav {
   border: none;
   background: transparent;
-  color: inherit;
+  color: var(--text-sub);
   font-size: 48px;
   width: 80px;
   height: 80px;
@@ -164,6 +178,7 @@ body {
 .datenav .label {
   font-size: 32px;
   font-weight: 700;
+  color: var(--text-sub);
 }
 .datenav .label-sub {
   font-size: 24px;
@@ -221,6 +236,9 @@ body {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
 }
+.recbtns.stack {
+  grid-template-columns: 1fr;
+}
 
 /* toggle */
 .tg {
@@ -249,8 +267,9 @@ body {
 }
 .tg-row {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
 }
 .track {
   width: 42px;
@@ -272,7 +291,7 @@ body {
   transition: transform 0.16s ease;
 }
 .tg-word {
-  font-size: 14px;
+  font-size: 28px;
   font-weight: 700;
   color: var(--tg-off-text);
 }
@@ -333,24 +352,6 @@ body {
   height: 58px;
 }
 
-.last {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-  margin-top: 11px;
-  font-size: 18px;
-  color: var(--text-faint);
-}
-.last span {
-  margin-left: 60px;
-}
-.last b {
-  font-size: 21px;
-  font-weight: 700;
-  color: var(--text-sub);
-}
-
 /* ---- history ---- */
 .history {
   padding: 8px 16px 0;
@@ -404,6 +405,7 @@ body {
 }
 .hrow .txt {
   flex: 1;
+  color: var(--text-sub);
 }
 .hrow .hint {
   color: var(--text-faint);
