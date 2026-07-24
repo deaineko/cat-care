@@ -12,13 +12,13 @@ export type ToggleKind = 'window' | 'stove' | 'fan';
 export const TOGGLE_KINDS: ToggleKind[] = ['window', 'stove', 'fan'];
 
 export const KIND_META: Record<Kind, { em: string; label: string; icon?: string }> = {
-  meal: { em: '🍚', label: 'ごはん', icon: 'icon-meal' },
-  litter: { em: '🚽', label: 'トイレ掃除', icon: 'icon-toilet' },
+  meal: { em: '🍚', label: 'ごはん', icon: 'icon-meal-02' },
+  litter: { em: '🚽', label: 'トイレ掃除', icon: 'icon-toilet-02' },
   med: { em: '💊', label: '薬' },
   memo: { em: '📝', label: '自由メモ' },
-  window: { em: '🪟', label: '窓', icon: 'icon-window' },
-  stove: { em: '🔥', label: 'ストーブ', icon: 'icon-stove' },
-  fan: { em: '🌀', label: '扇風機', icon: 'icon-fan' },
+  window: { em: '🪟', label: '窓', icon: 'icon-window-02' },
+  stove: { em: '🔥', label: 'ストーブ', icon: 'icon-stove-02' },
+  fan: { em: '🌀', label: '扇風機', icon: 'icon-fan-02' },
 };
 
 export const WEEK = ['日', '月', '火', '水', '木', '金', '土'] as const;

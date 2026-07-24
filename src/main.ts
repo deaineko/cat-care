@@ -54,7 +54,7 @@ function iconHtml(name: string, size: number): string {
 
 function toggleHtml(room: Room, kind: ToggleKind): string {
   const on = toggles[`${room}:${kind}`] ?? false;
-  const word = kind === 'window' ? (on ? 'Open' : 'Close') : on ? 'On' : 'Off';
+  const word = kind === 'window' ? (on ? 'OPEN' : 'CLOSE') : on ? 'ON' : 'OFF';
   const meta = KIND_META[kind];
   return `
   <div class="tg" data-toggle="${room}:${kind}" data-on="${on}">
@@ -74,17 +74,16 @@ function roomCardHtml(room: Room): string {
       ${TOGGLE_KINDS.map((kind) => toggleHtml(room, kind)).join('')}
     </div>
     <div class="grid2 recbtns stack">
-      <button class="btn btn-icon" data-rec="${room}:meal">${iconHtml(KIND_META.meal.icon!, 58)}<span>🕐 ごはん <b>${lastTimeStr(records, room, 'meal', today)}</b></span></button>
-      <button class="btn btn-icon" data-rec="${room}:litter">${iconHtml(KIND_META.litter.icon!, 58)}<span>🕐 トイレ <b>${lastTimeStr(records, room, 'litter', today)}</b></span></button>
+      <button class="btn btn-icon" data-rec="${room}:meal">${iconHtml(KIND_META.meal.icon!, 58)}<span>ごはん <b>${lastTimeStr(records, room, 'meal', today)}</b></span></button>
+      <button class="btn btn-icon" data-rec="${room}:litter">${iconHtml(KIND_META.litter.icon!, 58)}<span>トイレ <b>${lastTimeStr(records, room, 'litter', today)}</b></span></button>
     </div>
   </div>`;
 }
 
 function rowInner(r: Rec): string {
-  const em = KIND_META[r.kind].em;
   let txt: string;
-  if (r.kind === 'window') txt = r.toggleValue ? '窓を開けた' : '窓を閉めた';
-  else if (r.kind === 'stove') txt = r.toggleValue ? 'ストーブを入れた' : 'ストーブを切った';
+  if (r.kind === 'window') txt = r.toggleValue ? '窓：Open' : '窓：Close';
+  else if (r.kind === 'stove') txt = r.toggleValue ? 'ストーブ：On' : 'ストーブ：Off';
   else if (r.kind === 'memo')
     txt = r.alert ? `<span class="mark">${esc(r.note ?? '')}</span>` : esc(r.note ?? '');
   else if (r.kind === 'med')
@@ -94,7 +93,9 @@ function rowInner(r: Rec): string {
         : esc(r.note)
       : '薬　<span class="hint">（タップで追記）</span>';
   else txt = KIND_META[r.kind].label;
-  return `<span class="tm">${fmtTime(r.at)}</span><span class="em">${em}</span><span class="txt">${txt}</span>`;
+  const icon =
+    r.kind === 'med' ? iconHtml('icon-medicine-02', 36) : r.kind === 'memo' ? iconHtml('icon-note-02', 36) : '';
+  return `<span class="tm">${fmtTime(r.at)}</span>${icon}<span class="txt">${txt}</span>`;
 }
 
 function sectionHtml(label: string, recs: Rec[], editable: boolean): string {
@@ -113,7 +114,7 @@ function historyHtml(): string {
   const mid = selectedMid();
   const editable = offset === 0;
   const dayRecs = recsForDay(records, mid);
-  let html = `<p class="history-title">${offset === 0 ? '今日の履歴' : '履歴'}</p>`;
+  let html = `<p class="history-title" style="display:flex;align-items:center;gap:8px">${iconHtml('icon-history-02', 48)}${offset === 0 ? '今日の履歴' : '履歴'}</p>`;
   for (const room of ROOMS) {
     html += sectionHtml(ROOM_LABEL[room], dayRecs.filter((r) => r.room === room), editable);
   }
@@ -136,7 +137,7 @@ function render(): void {
     <div class="hd-top">
       <div class="hd-title">${iconHtml('icon-app', 80)}<span class="hd-title-text"><span>お世話</span><span>アプリ</span></span></div>
       <div class="hd-actions">
-        <button class="icon-btn" data-settings aria-label="設定">${iconHtml('icon-gear', 48)}</button>
+        <button class="icon-btn" data-settings aria-label="設定">${iconHtml('icon-gear-02', 48)}</button>
       </div>
     </div>
     <div class="datenav">
@@ -157,8 +158,8 @@ function render(): void {
     <div class="card">
       <p class="card-title">全体</p>
       <div class="grid2 recbtns">
-        <button class="btn" data-rec="all:med"><span class="em">💊</span>薬</button>
-        <button class="btn" data-memo><span class="em">📝</span>自由メモ</button>
+        <button class="btn" data-rec="all:med" style="flex-direction:row;gap:8px">${iconHtml('icon-medicine-02', 44)}薬</button>
+        <button class="btn" data-memo style="flex-direction:row;gap:8px">${iconHtml('icon-note-02', 44)}自由メモ</button>
       </div>
     </div></div>`;
   }

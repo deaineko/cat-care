@@ -291,7 +291,7 @@ body {
   transition: transform 0.16s ease;
 }
 .tg-word {
-  font-size: 28px;
+  font-size: 25px;
   font-weight: 700;
   color: var(--tg-off-text);
 }
@@ -344,6 +344,8 @@ body {
 }
 .btn-icon {
   flex-direction: row;
+  justify-content: flex-start;
+  padding-left: 20px;
   font-size: 24px;
   min-height: 80px;
 }
