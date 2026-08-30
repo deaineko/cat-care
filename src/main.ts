@@ -21,6 +21,8 @@ import {
   recsForDay,
 } from './derive';
 import * as db from './db';
+import * as medDb from './med/db';
+import type { MedBackup } from './med/types';
 import { requestPersist } from './storage';
 import { exportBackup, validateBackup } from './backup';
 import { registerSW } from 'virtual:pwa-register';
@@ -91,7 +93,7 @@ function rowInner(r: Rec): string {
       ? r.alert
         ? `<span class="mark">${esc(r.note)}</span>`
         : esc(r.note)
-      : '薬　<span class="hint">（タップで追記）</span>';
+      : 'くすり　<span class="hint">（タップで追記）</span>';
   else txt = KIND_META[r.kind].label;
   const icon =
     r.kind === 'med' ? iconHtml('icon-medicine-02', 36) : r.kind === 'memo' ? iconHtml('icon-note-02', 36) : '';
@@ -158,7 +160,7 @@ function render(): void {
     <div class="card">
       <p class="card-title">全体</p>
       <div class="grid2 recbtns">
-        <button class="btn" data-rec="all:med" style="flex-direction:row;gap:8px">${iconHtml('icon-medicine-02', 44)}薬</button>
+        <a class="btn btn-link" href="med/">${iconHtml('icon-medicine-02', 44)}くすり</a>
         <button class="btn" data-memo style="flex-direction:row;gap:8px">${iconHtml('icon-note-02', 44)}自由メモ</button>
       </div>
     </div></div>`;
@@ -325,7 +327,9 @@ function openSettings(): void {
     </div>`;
   const close = openSheet(c);
   c.querySelector('[data-export]')!.addEventListener('click', () => {
-    exportBackup(records);
+    void (async () => {
+      exportBackup(records, await medDb.loadAll());
+    })();
   });
   c.querySelector('[data-import]')!.addEventListener('click', () => {
     startImport(close);
@@ -333,13 +337,21 @@ function openSettings(): void {
   c.querySelector('[data-close]')!.addEventListener('click', close);
 }
 
-/** 全置換し、置換前のデータを返す（取り消し用）。 */
-async function doReplace(newRecords: Rec[]): Promise<Rec[]> {
-  const prev = records.slice();
-  await db.replaceAll(newRecords);
+interface Snapshot {
+  records: Rec[];
+  med: MedBackup;
+}
+
+/** お世話・投薬をまとめて全置換し、置換前のデータを返す（取り消し用）。 */
+async function doReplace(next: Snapshot): Promise<Snapshot> {
+  const prev: Snapshot = { records: records.slice(), med: await medDb.loadAll() };
+  await db.replaceAll(next.records);
+  await medDb.replaceAll(next.med);
   await refreshFromDb();
   return prev;
 }
+
+const EMPTY_MED: MedBackup = { cats: [], regimens: [], doses: [] };
 
 function startImport(closeSettings: () => void): void {
   const input = document.createElement('input');
@@ -353,13 +365,17 @@ function startImport(closeSettings: () => void): void {
       alert(`読み込めませんでした：${res.error}\n現在のデータはそのままです。`);
       return;
     }
-    const cur = records.length;
     const next = res.records.length;
-    if (!confirm(`現在 ${cur} 件を、読み込んだ ${next} 件で置き換えます。\nこの操作は元に戻せません。よろしいですか？`)) {
+    const nextMed = res.med ?? EMPTY_MED;
+    if (
+      !confirm(
+        `お世話の記録 ${next}件 と 投薬の記録 ${nextMed.doses.length}件 で、いまのデータを置き換えます。\nこの操作は元に戻せません。よろしいですか？`,
+      )
+    ) {
       return;
     }
     try {
-      const prev = await doReplace(res.records);
+      const prev = await doReplace({ records: res.records, med: nextMed });
       closeSettings();
       showToast(`${next} 件を読み込みました`, () => {
         void doReplace(prev);
@@ -474,7 +490,7 @@ if (import.meta.env.DEV) {
     applyBackupText: async (text: string) => {
       const res = validateBackup(text);
       if (!res.ok) return res;
-      await doReplace(res.records);
+      await doReplace({ records: res.records, med: res.med ?? EMPTY_MED });
       return { ok: true, count: res.records.length };
     },
   };

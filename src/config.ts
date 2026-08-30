@@ -14,7 +14,7 @@ export const TOGGLE_KINDS: ToggleKind[] = ['window', 'stove', 'fan'];
 export const KIND_META: Record<Kind, { em: string; label: string; icon?: string }> = {
   meal: { em: '🍚', label: 'ごはん', icon: 'icon-meal-02' },
   litter: { em: '🚽', label: 'トイレ掃除', icon: 'icon-toilet-02' },
-  med: { em: '💊', label: '薬' },
+  med: { em: '💊', label: 'くすり' },
   memo: { em: '📝', label: '自由メモ' },
   window: { em: '🪟', label: '窓', icon: 'icon-window-02' },
   stove: { em: '🔥', label: 'ストーブ', icon: 'icon-stove-02' },

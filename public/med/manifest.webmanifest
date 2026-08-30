@@ -1,0 +1,21 @@
+{
+  "name": "くすり",
+  "short_name": "くすり",
+  "description": "猫の投薬を、飲ませた分だけ確実に記録",
+  "lang": "ja",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fbf6ec",
+  "theme_color": "#faeeda",
+  "icons": [
+    { "src": "../icons/pwa-192x192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "../icons/pwa-512x512.png", "sizes": "512x512", "type": "image/png" },
+    {
+      "src": "../icons/maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

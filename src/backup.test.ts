@@ -50,3 +50,71 @@ describe('validateBackup', () => {
     expect(validateBackup(bad).ok).toBe(false);
   });
 });
+
+const medSample = {
+  cats: [{ id: 'c1', name: 'ミケ', room: 'living' }],
+  regimens: [
+    {
+      id: 'r1',
+      catId: 'c1',
+      drug: 'アモキシシリン',
+      dosesPerDay: 2,
+      totalDoses: 10,
+      startedAt: 1,
+      status: 'active',
+    },
+  ],
+  doses: [{ id: 'd1', regimenId: 'r1', at: 2 }],
+};
+
+const envMed = (med: unknown) =>
+  JSON.stringify({ schemaVersion: SCHEMA_VERSION, exportedAt: 0, records: [], med });
+
+describe('validateBackup：投薬データ（med）', () => {
+  it('med つきの封筒は通り、中身がそのまま返る', () => {
+    const res = validateBackup(envMed(medSample));
+    expect(res.ok).toBe(true);
+    if (res.ok) {
+      expect(res.med?.cats).toHaveLength(1);
+      expect(res.med?.regimens[0]!.drug).toBe('アモキシシリン');
+      expect(res.med?.doses).toHaveLength(1);
+    }
+  });
+
+  it('med の無い v1 ファイルもそのまま読める（後方互換）', () => {
+    const v1 = JSON.stringify({ schemaVersion: 1, exportedAt: 0, records: [] });
+    const res = validateBackup(v1);
+    expect(res.ok).toBe(true);
+    if (res.ok) expect(res.med).toBeUndefined();
+  });
+
+  it('med の3配列が揃っていなければ拒否', () => {
+    expect(validateBackup(envMed({ cats: [], regimens: [] })).ok).toBe(false);
+  });
+
+  it('未知の部屋の猫は拒否', () => {
+    const bad = { ...medSample, cats: [{ id: 'c1', name: 'ミケ', room: 'kitchen' }] };
+    expect(validateBackup(envMed(bad)).ok).toBe(false);
+  });
+
+  it('回数が数値でない処方は拒否', () => {
+    const bad = {
+      ...medSample,
+      regimens: [{ ...medSample.regimens[0], dosesPerDay: '2' }],
+    };
+    expect(validateBackup(envMed(bad)).ok).toBe(false);
+  });
+
+  it('未知の status は拒否', () => {
+    const bad = {
+      ...medSample,
+      regimens: [{ ...medSample.regimens[0], status: 'paused' }],
+    };
+    expect(validateBackup(envMed(bad)).ok).toBe(false);
+  });
+
+  it('regimenId の無い投与記録は拒否', () => {
+    const bad = { ...medSample, doses: [{ id: 'd1', at: 2 }] };
+    expect(validateBackup(envMed(bad)).ok).toBe(false);
+  });
+});

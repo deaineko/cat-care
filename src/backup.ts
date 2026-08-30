@@ -1,15 +1,20 @@
 import { KINDS, ROOMS } from './config';
 import { SCHEMA_VERSION, type Rec, type BackupEnvelope } from './types';
+import type { MedBackup } from './med/types';
 
 const KIND_SET = new Set<string>(KINDS);
 const ROOM_SET = new Set<string>(ROOMS);
 
-/** 封筒形式 { schemaVersion, exportedAt, records } で JSON をダウンロード。 */
-export function exportBackup(records: Rec[]): void {
+/**
+ * 封筒形式 { schemaVersion, exportedAt, records, med } で JSON をダウンロード。
+ * お世話と投薬を1ファイルにまとめ、片方だけ書き出す事故を防ぐ。
+ */
+export function exportBackup(records: Rec[], med?: MedBackup): void {
   const env: BackupEnvelope = {
     schemaVersion: SCHEMA_VERSION,
     exportedAt: Date.now(),
     records,
+    ...(med ? { med } : {}),
   };
   const blob = new Blob([JSON.stringify(env, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -22,7 +27,9 @@ export function exportBackup(records: Rec[]): void {
   URL.revokeObjectURL(url);
 }
 
-export type ValidateResult = { ok: true; records: Rec[] } | { ok: false; error: string };
+export type ValidateResult =
+  | { ok: true; records: Rec[]; med?: MedBackup }
+  | { ok: false; error: string };
 
 function validRecord(r: Record<string, unknown>): boolean {
   if (typeof r.id !== 'string' || typeof r.at !== 'number') return false;
@@ -61,5 +68,40 @@ export function validateBackup(text: string): ValidateResult {
       return { ok: false, error: '壊れた記録が含まれています' };
     }
   }
-  return { ok: true, records: env.records as Rec[] };
+  const med = parseMed(env.med);
+  if (med === 'invalid') return { ok: false, error: '投薬データが壊れています' };
+  return { ok: true, records: env.records as Rec[], ...(med ? { med } : {}) };
+}
+
+function str(v: unknown): boolean {
+  return typeof v === 'string' && v.length > 0;
+}
+
+/** med セクションの検証。未収録（v1 ファイル）は undefined を返して受理する。 */
+function parseMed(raw: unknown): MedBackup | undefined | 'invalid' {
+  if (raw === undefined || raw === null) return undefined;
+  if (typeof raw !== 'object') return 'invalid';
+  const m = raw as Record<string, unknown>;
+  if (!Array.isArray(m.cats) || !Array.isArray(m.regimens) || !Array.isArray(m.doses)) {
+    return 'invalid';
+  }
+  for (const c of m.cats) {
+    const o = c as Record<string, unknown>;
+    if (!str(o?.id) || !str(o?.name) || typeof o?.room !== 'string' || !ROOM_SET.has(o.room)) {
+      return 'invalid';
+    }
+  }
+  for (const r of m.regimens) {
+    const o = r as Record<string, unknown>;
+    if (!str(o?.id) || !str(o?.catId) || !str(o?.drug)) return 'invalid';
+    if (typeof o.dosesPerDay !== 'number' || o.dosesPerDay < 1) return 'invalid';
+    if (typeof o.totalDoses !== 'number' || o.totalDoses < 1) return 'invalid';
+    if (typeof o.startedAt !== 'number') return 'invalid';
+    if (o.status !== 'active' && o.status !== 'stopped') return 'invalid';
+  }
+  for (const d of m.doses) {
+    const o = d as Record<string, unknown>;
+    if (!str(o?.id) || !str(o?.regimenId) || typeof o?.at !== 'number') return 'invalid';
+  }
+  return m as unknown as MedBackup;
 }

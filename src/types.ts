@@ -1,4 +1,5 @@
 import type { Room, ToggleKind } from './config';
+import type { MedBackup } from './med/types';
 
 export type Rec =
   | { id: string; at: number; kind: 'meal' | 'litter'; room: Room; note?: string; alert?: boolean }
@@ -14,10 +15,12 @@ export interface ToggleState {
   at: number;
 }
 
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 export interface BackupEnvelope {
   schemaVersion: number;
   exportedAt: number;
   records: Rec[];
+  /** 投薬アプリ（/med/）のデータ。v1 のファイルには存在しない。 */
+  med?: MedBackup;
 }

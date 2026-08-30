@@ -1,8 +1,17 @@
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
   base: './',
+  build: {
+    rollupOptions: {
+      input: {
+        main: fileURLToPath(new URL('./index.html', import.meta.url)),
+        med: fileURLToPath(new URL('./med/index.html', import.meta.url)),
+      },
+    },
+  },
   plugins: [
     VitePWA({
       registerType: 'prompt',
