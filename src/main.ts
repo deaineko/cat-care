@@ -85,8 +85,9 @@ function roomCardHtml(room: Room): string {
 
 function rowInner(r: Rec): string {
   let txt: string;
-  if (r.kind === 'window') txt = r.toggleValue ? '窓：Open' : '窓：Close';
-  else if (r.kind === 'stove') txt = r.toggleValue ? 'ストーブ：On' : 'ストーブ：Off';
+  if (r.kind === 'window') txt = `窓：${r.toggleValue ? 'Open' : 'Close'}`;
+  else if (r.kind === 'stove' || r.kind === 'fan')
+    txt = `${KIND_META[r.kind].label}：${r.toggleValue ? 'On' : 'Off'}`;
   else if (r.kind === 'memo')
     txt = r.alert ? `<span class="mark">${esc(r.note ?? '')}</span>` : esc(r.note ?? '');
   else if (r.kind === 'med')
