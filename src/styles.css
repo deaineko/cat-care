@@ -147,6 +147,34 @@ body {
   transform: scale(0.94);
 }
 
+.hd-top-sub {
+  justify-content: flex-start;
+  gap: 12px;
+}
+.hd-back {
+  flex: none;
+  font: inherit;
+  font-size: 21px;
+  font-weight: 700;
+  border: 0.5px solid var(--tg-on-edge);
+  background: transparent;
+  color: var(--accent);
+  border-radius: 999px;
+  padding: 8px 18px;
+  min-height: 48px;
+  cursor: pointer;
+}
+.hd-back:active {
+  transform: scale(0.96);
+}
+.hd-title-sub {
+  font-size: 34px;
+}
+.hd-title-sub .icon {
+  width: 56px;
+  height: 56px;
+}
+
 .datenav {
   display: flex;
   flex-direction: column;
@@ -204,7 +232,7 @@ body {
   border-radius: var(--radius-md);
   background: var(--surface-2);
   border: 0.5px solid var(--border-2);
-  font-size: 13px;
+  font-size: 16px;
   color: var(--text-sub);
 }
 
@@ -353,16 +381,21 @@ body {
   width: 58px;
   height: 58px;
 }
+.history-open {
+  width: 100%;
+  margin-top: 14px;
+  gap: 12px;
+}
+.history-open .chev {
+  margin-left: auto;
+  padding-right: 8px;
+  font-size: 32px;
+  color: var(--text-faint);
+}
 
 /* ---- history ---- */
 .history {
-  padding: 8px 16px 0;
-}
-.history-title {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--text-sub);
-  margin: 16px 2px 12px;
+  padding: 14px 16px 0;
 }
 .hsec-label {
   font-size: 21px;

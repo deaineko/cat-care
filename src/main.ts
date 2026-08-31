@@ -32,7 +32,8 @@ const today = midnight(new Date());
 // ---- in-memory mirror of the DB (for synchronous rendering) ----
 let records: Rec[] = [];
 const toggles: Record<string, boolean> = {};
-let offset = 0; // 0 = today
+let offset = 0; // 0 = today（履歴画面でのみ動かす）
+let view: 'home' | 'history' = 'home';
 
 function persist(p: Promise<unknown>): void {
   p.catch((e) => console.error('永続化に失敗', e));
@@ -116,24 +117,18 @@ function historyHtml(): string {
   const mid = selectedMid();
   const editable = offset === 0;
   const dayRecs = recsForDay(records, mid);
-  let html = `<p class="history-title" style="display:flex;align-items:center;gap:8px">${iconHtml('icon-history-02', 48)}${offset === 0 ? '今日の履歴' : '履歴'}</p>`;
+  let html = '';
   for (const room of ROOMS) {
     html += sectionHtml(ROOM_LABEL[room], dayRecs.filter((r) => r.room === room), editable);
   }
   html += sectionHtml('全体', dayRecs.filter((r) => r.room === null), editable);
   if (editable && dayRecs.length === 0) {
-    html += `<p class="empty-hint">ボタンを押すと、ここに今日の記録が出ます。</p>`;
+    html += `<p class="empty-hint">ホーム画面のボタンを押すと、ここに今日の記録が出ます。</p>`;
   }
   return `<div class="history">${html}</div>`;
 }
 
-function render(): void {
-  const app = document.getElementById('app')!;
-  const past = offset !== 0;
-  const right = past
-    ? `<button class="today-back" data-nav="today">今日へ戻る</button>`
-    : `<button class="nav" data-nav="next" disabled aria-label="次の日">›</button>`;
-
+function homeView(): string {
   let html = `
   <div class="hd">
     <div class="hd-top">
@@ -141,6 +136,34 @@ function render(): void {
       <div class="hd-actions">
         <button class="icon-btn" data-settings aria-label="設定">${iconHtml('icon-gear-02', 48)}</button>
       </div>
+    </div>
+  </div>
+  <div class="cards">`;
+  for (const room of ROOMS) html += roomCardHtml(room);
+  html += `
+    <div class="card">
+      <p class="card-title">全体</p>
+      <div class="grid2 recbtns">
+        <a class="btn btn-link" href="med/">${iconHtml('icon-medicine-02', 44)}くすり</a>
+        <button class="btn" data-memo style="flex-direction:row;gap:8px">${iconHtml('icon-note-02', 44)}自由メモ</button>
+      </div>
+    </div>
+    <button class="btn btn-icon history-open" data-view="history">${iconHtml('icon-history-02', 58)}<span>履歴を見る</span><span class="chev">›</span></button>
+  </div>`;
+  return html;
+}
+
+function historyView(): string {
+  const past = offset !== 0;
+  const right = past
+    ? `<button class="today-back" data-nav="today">今日へ戻る</button>`
+    : `<button class="nav" data-nav="next" disabled aria-label="次の日">›</button>`;
+
+  let html = `
+  <div class="hd">
+    <div class="hd-top hd-top-sub">
+      <button class="hd-back" data-view="home">‹ 戻る</button>
+      <div class="hd-title hd-title-sub">${iconHtml('icon-history-02', 56)}履歴</div>
     </div>
     <div class="datenav">
       <span class="label">${dateLabel()}</span>
@@ -152,22 +175,36 @@ function render(): void {
   </div>`;
 
   if (past) {
-    html += `<div class="banner">🔒 ${dateLabel()} を閲覧中・操作できるのは今日だけ</div>`;
-  } else {
-    html += `<div class="cards">`;
-    for (const room of ROOMS) html += roomCardHtml(room);
-    html += `
-    <div class="card">
-      <p class="card-title">全体</p>
-      <div class="grid2 recbtns">
-        <a class="btn btn-link" href="med/">${iconHtml('icon-medicine-02', 44)}くすり</a>
-        <button class="btn" data-memo style="flex-direction:row;gap:8px">${iconHtml('icon-note-02', 44)}自由メモ</button>
-      </div>
-    </div></div>`;
+    html += `<div class="banner"><span>🔒</span><span>${dateLabel()} を閲覧中・記録を直せるのは今日だけ</span></div>`;
   }
   html += historyHtml();
-  app.innerHTML = html;
+  return html;
 }
+
+function render(): void {
+  document.getElementById('app')!.innerHTML = view === 'history' ? historyView() : homeView();
+}
+
+/** 画面遷移。履歴へは pushState で入り、戻るは端末の戻る操作と同じ経路に揃える。 */
+function goto(next: 'home' | 'history'): void {
+  if (next === view) return;
+  if (next === 'home') {
+    history.back(); // popstate 側で描画する
+    return;
+  }
+  offset = 0;
+  history.pushState(null, '', '#history');
+  view = 'history';
+  hideToast();
+  render();
+}
+
+window.addEventListener('popstate', () => {
+  view = location.hash === '#history' ? 'history' : 'home';
+  if (view === 'home') offset = 0;
+  hideToast();
+  render();
+});
 
 // ---- toast ----
 let toastEl: HTMLDivElement | null = null;
@@ -400,7 +437,7 @@ document.getElementById('app')!.addEventListener('click', (e) => {
   const target = e.target as HTMLElement;
 
   const tg = target.closest('[data-toggle]') as HTMLElement | null;
-  if (tg && offset === 0) {
+  if (tg) {
     const [room, kind] = tg.dataset.toggle!.split(':') as [Room, ToggleKind];
     const key = `${room}:${kind}`;
     const next = !(toggles[key] ?? false);
@@ -419,7 +456,7 @@ document.getElementById('app')!.addEventListener('click', (e) => {
   }
 
   const recBtn = target.closest('[data-rec]') as HTMLElement | null;
-  if (recBtn && offset === 0) {
+  if (recBtn) {
     const [roomRaw, kind] = recBtn.dataset.rec!.split(':') as [string, Kind];
     const room = roomRaw === 'all' ? null : (roomRaw as Room);
     const rec = { id: genId(), at: Date.now(), kind, room } as Rec;
@@ -434,8 +471,11 @@ document.getElementById('app')!.addEventListener('click', (e) => {
     return;
   }
 
-  if (target.closest('[data-memo]') && offset === 0) return openMemoSheet();
+  if (target.closest('[data-memo]')) return openMemoSheet();
   if (target.closest('[data-settings]')) return openSettings();
+
+  const viewBtn = target.closest('[data-view]') as HTMLElement | null;
+  if (viewBtn) return goto(viewBtn.dataset.view as 'home' | 'history');
 
   const edit = target.closest('[data-edit]') as HTMLElement | null;
   if (edit) return openEditSheet(edit.dataset.edit!);
@@ -468,6 +508,8 @@ async function init(): Promise<void> {
   void requestPersist();
   await refreshFromDb();
 }
+
+if (location.hash) history.replaceState(null, '', location.pathname + location.search);
 
 render(); // 初期スケルトン（DB読み込み前）
 void init();
