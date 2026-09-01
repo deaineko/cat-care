@@ -145,7 +145,7 @@ function homeView(): string {
     <div class="card">
       <p class="card-title">全体</p>
       <div class="grid2 recbtns">
-        <a class="btn btn-link" href="med/">${iconHtml('icon-medicine-02', 44)}くすり</a>
+        <a class="btn btn-link" href="med/">${iconHtml('icon-app-med', 44)}くすり</a>
         <button class="btn" data-memo style="flex-direction:row;gap:8px">${iconHtml('icon-note-02', 44)}自由メモ</button>
       </div>
     </div>

@@ -189,7 +189,7 @@ function render(): void {
   let html = `
   <div class="hd">
     <div class="hd-top">
-      <div class="hd-title">${iconHtml('icon-medicine-02', 80)}<span class="hd-title-text"><span>くすり</span></span></div>
+      <div class="hd-title">${iconHtml('icon-app-med', 80)}<span class="hd-title-text"><span>くすり</span></span></div>
       <div class="hd-actions">
         <button class="icon-btn" data-settings aria-label="設定">${iconHtml('icon-gear-02', 48)}</button>
       </div>
