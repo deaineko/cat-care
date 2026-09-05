@@ -605,9 +605,13 @@ body {
 }
 .msec {
   margin: 20px 0 8px;
-  font-size: 19px;
+  font-size: 22px;
   font-weight: 700;
   color: var(--text-sub);
+}
+/* 空状態の案内文は見出し(.msec)と同じ大きさに。太さ・色はそのまま */
+.mwrap .empty-hint {
+  font-size: 19px;
 }
 .msep {
   height: 1px;
@@ -684,6 +688,10 @@ body {
   font-size: 17px;
   font-weight: 700;
   color: var(--text-sub);
+}
+.mrow-date {
+  margin-left: 10px;
+  font-weight: 400;
 }
 .mrow-tm {
   flex: 0 0 auto;

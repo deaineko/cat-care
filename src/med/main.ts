@@ -49,6 +49,12 @@ function dateLabel(): string {
   const sub = `（${WEEK[d.getDay()]}）${offset === 0 ? '今日' : ''}`;
   return `${d.getFullYear()}/${mm}/${dd}<span class="label-sub">${sub}</span>`;
 }
+function fmtDay(ts: number): string {
+  const d = new Date(ts);
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}/${mm}/${dd}(${WEEK[d.getDay()]})`;
+}
 function iconHtml(name: string, size: number): string {
   return `<img class="icon" src="../icons/ui/${name}.svg" alt="" width="${size}" height="${size}">`;
 }
@@ -445,10 +451,13 @@ function openArchiveSheet(): void {
       ${done
         .map((r) => {
           const state = r.status === 'stopped' ? '中止' : '完了';
+          const ds = dosesOf(r.id);
+          // 終了日は持たない設計なので、最後の実績日を完了日として出す（実績ゼロの中止は開始日）
+          const endAt = ds.length ? Math.max(...ds.map((d) => d.at)) : r.startedAt;
           return `<div class="mrow mrow-flat" data-reg="${r.id}">
             <span class="mrow-body">
               <span class="mrow-main">${esc(catName(r.catId))} / ${esc(r.drug)}</span>
-              <span class="mrow-prog">${state}・${dosesOf(r.id).length}/${r.totalDoses}回</span>
+              <span class="mrow-prog">${state}・${ds.length}/${r.totalDoses}回<span class="mrow-date">${fmtDay(endAt)}</span></span>
             </span>
             <span class="mrow-chev">›</span>
           </div>`;
