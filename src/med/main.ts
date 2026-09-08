@@ -1,7 +1,7 @@
 import '../styles.css';
 import { ROOMS, ROOM_LABEL, WEEK, genId, esc, type Room } from '../config';
 import { midnight, addDays, fmtTime, dayKey } from '../derive';
-import { dayRows, dayLabel, doseLabel, isFinished, progressCells, remaining, totalDays, type DayRow } from './calc';
+import { dayRows, dayLabel, doseLabel, extendRegimen, isFinished, originalDays, progressCells, remaining, totalDays, type DayRow } from './calc';
 import type { Cat, Dose, Regimen } from './types';
 import * as med from './db';
 import * as careDb from '../db';
@@ -158,11 +158,16 @@ function ongoingHtml(): string {
         seenGroups.add(reg.groupId);
         const members = regimens.filter((r) => r.groupId === reg.groupId);
         const going = members.filter((r) => !isFinished(r, dosesOf(r.id))).length;
+        // 猫ごとに延長できるので、日数が揃っていなければ範囲で出す
+        const dayCounts = members.map(totalDays);
+        const minD = Math.min(...dayCounts);
+        const maxD = Math.max(...dayCounts);
+        const daysLabel = minD === maxD ? `全${minD}日` : `全${minD}〜${maxD}日`;
         html += `
       <div class="mrow mrow-flat" data-group="${reg.groupId}">
         <span class="mrow-body">
           <span class="mrow-main">${esc(reg.drug)}（${members.length}匹）</span>
-          <span class="mrow-prog">${going}匹が進行中・1日${reg.dosesPerDay}回 × 全${totalDays(reg)}日</span>
+          <span class="mrow-prog">${going}匹が進行中・1日${reg.dosesPerDay}回 × ${daysLabel}</span>
         </span>
         <span class="mrow-chev">›</span>
       </div>`;
@@ -402,6 +407,15 @@ function openRegimenSheet(regId: string): void {
     .map((cell) => `<span class="pcell" data-on="${cell.done}" title="${cell.at ? esc(fmtTime(cell.at)) : ''}"></span>`)
     .join('');
   const members = reg.groupId ? groupSize(reg.groupId) : 1;
+  // 履歴は「5日→8日」のように、その時点までの累計で出す
+  let daysSoFar = originalDays(reg);
+  const extHistory = (reg.extensions ?? [])
+    .map((e) => {
+      const from = daysSoFar;
+      daysSoFar += e.days;
+      return `<p class="fmeta">延長：${fmtDay(e.at)} ＋${e.days}日（${from}日→${daysSoFar}日）</p>`;
+    })
+    .join('');
   const c = document.createElement('div');
   c.innerHTML = `
     <h3>${esc(catName(reg.catId))} / ${esc(reg.drug)}</h3>
@@ -409,8 +423,18 @@ function openRegimenSheet(regId: string): void {
     ${reg.note ? `<p class="fmeta">メモ：${esc(reg.note)}</p>` : ''}
     ${members >= 2 ? `<p class="fmeta">${members}匹にまとめて登録した処方です</p>` : ''}
     <p class="fmeta">1日${reg.dosesPerDay}回 × 全${totalDays(reg)}日 ＝ 全${reg.totalDoses}回</p>
+    ${extHistory}
     <p class="fmeta"><b>${ds.length}回 消化／残り ${remaining(reg, ds)}回</b></p>
     <div class="pgrid">${grid}</div>
+    ${
+      reg.status === 'stopped'
+        ? ''
+        : `<div class="extrow">
+      <label class="flabel" for="extdays">延長する日数</label>
+      <input class="finput" id="extdays" type="number" data-extdays min="1" max="90" inputmode="numeric" placeholder="日" />
+      <button data-extend disabled>延長する</button>
+    </div>`
+    }
     <div class="sheet-actions">
       <button class="danger" data-delete>削除</button>
       ${isFinished(reg, ds) ? '' : `<button data-stop>中止する</button>`}
@@ -420,6 +444,25 @@ function openRegimenSheet(regId: string): void {
     </div>`;
   const close = openSheet(c);
   c.querySelector('[data-close]')!.addEventListener('click', close);
+  const extEl = c.querySelector('[data-extdays]') as HTMLInputElement | null;
+  const extBtn = c.querySelector('[data-extend]') as HTMLButtonElement | null;
+  extEl?.addEventListener('input', () => {
+    extBtn!.disabled = !(Number(extEl.value) >= 1);
+  });
+  extBtn?.addEventListener('click', () => {
+    const days = Math.floor(Number(extEl!.value));
+    if (days < 1) return;
+    const before = reg;
+    const after = extendRegimen(reg, days, Date.now());
+    regimens = regimens.map((r) => (r.id === reg.id ? after : r));
+    close();
+    render();
+    persist(med.saveRegimen(after));
+    showToast(`${days}日延長しました`, () => {
+      regimens = regimens.map((r) => (r.id === reg.id ? before : r));
+      persist(med.saveRegimen(before));
+    });
+  });
   c.querySelector('[data-stop]')?.addEventListener('click', () => {
     reg.status = 'stopped';
     close();

@@ -758,6 +758,35 @@ body {
   background: var(--tg-on-knob);
   border-color: var(--tg-on-knob);
 }
+.extrow {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.extrow .flabel {
+  margin: 0;
+}
+.extrow .finput {
+  min-height: 48px;
+  text-align: center;
+}
+.extrow button {
+  min-height: 48px;
+  padding: 0 16px;
+  border-radius: var(--radius-md);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  border: 0.5px solid var(--btn-edge);
+  background: var(--btn-bg);
+  color: var(--btn-ink);
+}
+.extrow button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
 
 /* シート内のフォーム */
 .flabel {

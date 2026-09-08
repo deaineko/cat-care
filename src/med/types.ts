@@ -23,6 +23,13 @@ export interface Regimen {
   status: 'active' | 'stopped';
   /** 同じ薬を複数の猫にまとめて登録したときの識別子（表示を畳む用途のみ）。 */
   groupId?: string;
+  /** 延長の履歴。totalDoses は延長ぶんを含んだ現在値で、これは表示用。計算には使わない。 */
+  extensions?: Extension[];
+}
+
+export interface Extension {
+  at: number;
+  days: number;
 }
 
 export interface Dose {

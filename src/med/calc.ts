@@ -70,3 +70,18 @@ export function progressCells(reg: Regimen, doses: Dose[]): { done: boolean; at?
   }
   return cells;
 }
+
+/** 日数ぶん延長した新しい処方を返す。総回数を増やすだけなので、完了済みでも自動で進行中に戻る。 */
+export function extendRegimen(reg: Regimen, days: number, at: number): Regimen {
+  return {
+    ...reg,
+    totalDoses: reg.totalDoses + days * reg.dosesPerDay,
+    extensions: [...(reg.extensions ?? []), { at, days }],
+  };
+}
+
+/** 延長ぶんを差し引いた、登録時の日数。 */
+export function originalDays(reg: Regimen): number {
+  const extended = (reg.extensions ?? []).reduce((sum, e) => sum + e.days, 0);
+  return totalDays(reg) - extended;
+}

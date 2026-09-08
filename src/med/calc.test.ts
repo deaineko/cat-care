@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { dayRows, dayLabel, doseLabel, isFinished, progressCells, remaining, totalDays } from './calc';
+import { dayRows, dayLabel, doseLabel, extendRegimen, isFinished, originalDays, progressCells, remaining, totalDays } from './calc';
 import type { Dose, Regimen } from './types';
 
 /** 1日2回 × 5日 = 全10回 の抗生剤。 */
@@ -108,5 +108,38 @@ describe('progressCells', () => {
     expect(cells).toHaveLength(10);
     expect(cells.filter((c) => c.done)).toHaveLength(2);
     expect(cells[0]!.at).toBe(at(28, 8));
+  });
+});
+
+describe('extendRegimen / originalDays', () => {
+  const tenDone = Array.from({ length: 10 }, (_, i) => dose(`d${i}`, at(28 + Math.floor(i / 2), i % 2 ? 20 : 8)));
+
+  it('3日延長すると総回数が 1日の回数×3 だけ増え、履歴が1件残る', () => {
+    const ext = extendRegimen(reg, 3, at(2, 9));
+    expect(ext.totalDoses).toBe(16);
+    expect(ext.extensions).toEqual([{ at: at(2, 9), days: 3 }]);
+    expect(totalDays(ext)).toBe(8);
+    expect(reg.totalDoses).toBe(10);
+  });
+
+  it('飲み切って完了した処方も、延長すると進行中に戻り残りが出る', () => {
+    expect(isFinished(reg, tenDone)).toBe(true);
+    const ext = extendRegimen(reg, 3, at(2, 9));
+    expect(isFinished(ext, tenDone)).toBe(false);
+    expect(remaining(ext, tenDone)).toBe(6);
+  });
+
+  it('何度延長しても登録時の日数は変わらない', () => {
+    const twice = extendRegimen(extendRegimen(reg, 3, at(2, 9)), 2, at(5, 9));
+    expect(originalDays(reg)).toBe(5);
+    expect(originalDays(twice)).toBe(5);
+    expect(totalDays(twice)).toBe(10);
+  });
+
+  it('延長後の翌日は「6日目/全8日」から続く', () => {
+    const ext = extendRegimen(reg, 3, at(2, 9));
+    const rows = dayRows(ext, tenDone, new Date(2026, 8, 3), true);
+    expect(rows).toHaveLength(2);
+    expect(dayLabel(rows[0]!, ext)).toBe('6日目/全8日');
   });
 });
