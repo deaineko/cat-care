@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { dayRows, dayLabel, doseLabel, extendRegimen, isFinished, originalDays, progressCells, remaining, totalDays } from './calc';
+import { dayRows, dayLabel, doseLabel, extendRegimen, isFinished, originalDays, progressCells, remaining, reviseRegimen, totalDays } from './calc';
 import type { Dose, Regimen } from './types';
 
 /** 1日2回 × 5日 = 全10回 の抗生剤。 */
@@ -141,5 +141,27 @@ describe('extendRegimen / originalDays', () => {
     const rows = dayRows(ext, tenDone, new Date(2026, 8, 3), true);
     expect(rows).toHaveLength(2);
     expect(dayLabel(rows[0]!, ext)).toBe('6日目/全8日');
+  });
+});
+
+describe('reviseRegimen', () => {
+  it('1日の回数を直すと総回数も日数ぶん付け直される', () => {
+    const fixed = reviseRegimen(reg, 1, 5);
+    expect(fixed.dosesPerDay).toBe(1);
+    expect(fixed.totalDoses).toBe(5);
+    expect(totalDays(fixed)).toBe(5);
+  });
+
+  it('延長ぶんは維持される', () => {
+    const ext = extendRegimen(reg, 3, at(2, 9));
+    const fixed = reviseRegimen(ext, 1, 5);
+    expect(fixed.totalDoses).toBe(8);
+    expect(totalDays(fixed)).toBe(8);
+    expect(originalDays(fixed)).toBe(5);
+  });
+
+  it('実績より少なく直すと完了扱いになる', () => {
+    const ds = [dose('d1', at(28, 8)), dose('d2', at(28, 20)), dose('d3', at(29, 8))];
+    expect(isFinished(reviseRegimen(reg, 1, 2), ds)).toBe(true);
   });
 });

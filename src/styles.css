@@ -689,6 +689,17 @@ body {
   font-weight: 700;
   color: var(--text-sub);
 }
+/* 1日2回以上の薬は同じ行が並ぶので、何回目かだけ色つきで立たせる */
+.mrow-nth {
+  display: inline-block;
+  margin-right: 10px;
+  padding: 1px 9px;
+  border-radius: 999px;
+  background: var(--tg-on-edge);
+  color: var(--surface);
+  font-size: 16px;
+  font-weight: 900;
+}
 .mrow-date {
   margin-left: 10px;
   font-weight: 400;
@@ -740,6 +751,13 @@ body {
   text-decoration: underline;
   cursor: pointer;
 }
+.linkbtn-left {
+  width: auto;
+  margin: 2px 0 12px;
+  padding: 10px 0;
+  text-align: left;
+  font-size: 16px;
+}
 
 /* 経過グリッド（7列） */
 .pgrid {
@@ -786,6 +804,18 @@ body {
 .extrow button:disabled {
   opacity: 0.4;
   cursor: default;
+}
+/* 回数・日数の訂正。入力が2つ並ぶのでボタンだけ次の行に落とす */
+.revrow {
+  grid-template-columns: auto 1fr auto 1fr;
+}
+.revrow button {
+  grid-column: 1 / -1;
+}
+.revrow[hidden],
+.linkbtn[hidden],
+.fmeta[hidden] {
+  display: none;
 }
 
 /* シート内のフォーム */

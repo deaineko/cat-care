@@ -85,3 +85,12 @@ export function originalDays(reg: Regimen): number {
   const extended = (reg.extensions ?? []).reduce((sum, e) => sum + e.days, 0);
   return totalDays(reg) - extended;
 }
+
+/**
+ * 1日の回数・日数を登録しなおした処方を返す（登録ミスの訂正用）。
+ * days は「登録時の日数」なので、延長ぶんは足し直して総回数を保つ。
+ */
+export function reviseRegimen(reg: Regimen, dosesPerDay: number, days: number): Regimen {
+  const extended = (reg.extensions ?? []).reduce((sum, e) => sum + e.days, 0);
+  return { ...reg, dosesPerDay, totalDoses: dosesPerDay * (days + extended) };
+}

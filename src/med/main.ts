@@ -1,7 +1,7 @@
 import '../styles.css';
 import { ROOMS, ROOM_LABEL, WEEK, genId, esc, type Room } from '../config';
 import { midnight, addDays, fmtTime, dayKey } from '../derive';
-import { dayRows, dayLabel, doseLabel, extendRegimen, isFinished, originalDays, progressCells, remaining, totalDays, type DayRow } from './calc';
+import { dayRows, dayLabel, doseLabel, extendRegimen, isFinished, originalDays, progressCells, remaining, reviseRegimen, totalDays, type DayRow } from './calc';
 import type { Cat, Dose, Regimen } from './types';
 import * as med from './db';
 import * as careDb from '../db';
@@ -64,12 +64,17 @@ function rowHtml(reg: Regimen, row: DayRow): string {
   const attr = done ? `data-dose="${row.dose!.id}"` : `data-take="${reg.id}"`;
   const time = done ? `<span class="mrow-tm">${fmtTime(row.dose!.at)}</span>` : '';
   const dosage = reg.dose ? `<span class="mrow-dose">${esc(reg.dose)}</span>` : '';
+  // 1日2回以上の薬は同じ行が並ぶ。同じ薬の重複に見えないよう、何回目かだけ色つきチップで立たせる
+  const nth =
+    reg.dosesPerDay >= 2
+      ? `<span class="mrow-nth">${doseLabel(row, reg)}</span>`
+      : `${doseLabel(row, reg)}　`;
   return `
   <div class="mrow" ${attr} data-done="${done}">
     <span class="mchk">${done ? '✓' : ''}</span>
     <span class="mrow-body">
       <span class="mrow-main"><b>${esc(catName(reg.catId))}</b> ${esc(reg.drug)}</span>
-      <span class="mrow-prog">${doseLabel(row, reg)}　${dayLabel(row, reg)}${dosage}</span>
+      <span class="mrow-prog">${nth}${dayLabel(row, reg)}${dosage}</span>
     </span>
     ${time}
   </div>`;
@@ -424,6 +429,15 @@ function openRegimenSheet(regId: string): void {
     ${members >= 2 ? `<p class="fmeta">${members}匹にまとめて登録した処方です</p>` : ''}
     <p class="fmeta">1日${reg.dosesPerDay}回 × 全${totalDays(reg)}日 ＝ 全${reg.totalDoses}回</p>
     ${extHistory}
+    <button class="linkbtn linkbtn-left" data-revise-open>回数・日数を直す</button>
+    <div class="extrow revrow" data-revrow hidden>
+      <label class="flabel" for="revper">1日の回数</label>
+      <input class="finput" id="revper" type="number" data-revper min="1" max="6" value="${reg.dosesPerDay}" inputmode="numeric" />
+      <label class="flabel" for="revdays">日数</label>
+      <input class="finput" id="revdays" type="number" data-revdays min="1" max="90" value="${originalDays(reg)}" inputmode="numeric" />
+      <button data-revise>直す</button>
+    </div>
+    <p class="fmeta" data-revnote hidden></p>
     <p class="fmeta"><b>${ds.length}回 消化／残り ${remaining(reg, ds)}回</b></p>
     <div class="pgrid">${grid}</div>
     ${
@@ -444,6 +458,42 @@ function openRegimenSheet(regId: string): void {
     </div>`;
   const close = openSheet(c);
   c.querySelector('[data-close]')!.addEventListener('click', close);
+
+  // 回数・日数の訂正（登録ミス用。延長とは別物なので、開くまで隠しておく）
+  const revRow = c.querySelector('[data-revrow]') as HTMLElement;
+  const revNote = c.querySelector('[data-revnote]') as HTMLElement;
+  const revPerEl = c.querySelector('[data-revper]') as HTMLInputElement;
+  const revDaysEl = c.querySelector('[data-revdays]') as HTMLInputElement;
+  const revised = (): Regimen =>
+    reviseRegimen(reg, Math.max(1, Number(revPerEl.value) || 1), Math.max(1, Number(revDaysEl.value) || 1));
+  const paintRevNote = (): void => {
+    const next = revised();
+    const done = ds.length;
+    revNote.textContent =
+      `全${next.totalDoses}回になります` +
+      (done > next.totalDoses ? `（記録済みの${done}回を下回るため、完了扱いになります）` : '');
+  };
+  c.querySelector('[data-revise-open]')!.addEventListener('click', () => {
+    revRow.hidden = false;
+    revNote.hidden = false;
+    (c.querySelector('[data-revise-open]') as HTMLElement).hidden = true;
+    paintRevNote();
+  });
+  revPerEl.addEventListener('input', paintRevNote);
+  revDaysEl.addEventListener('input', paintRevNote);
+  c.querySelector('[data-revise]')!.addEventListener('click', () => {
+    const before = reg;
+    const after = revised();
+    regimens = regimens.map((r) => (r.id === reg.id ? after : r));
+    close();
+    render();
+    persist(med.saveRegimen(after));
+    showToast(`1日${after.dosesPerDay}回 × 全${totalDays(after)}日に直しました`, () => {
+      regimens = regimens.map((r) => (r.id === reg.id ? before : r));
+      persist(med.saveRegimen(before));
+    });
+  });
+
   const extEl = c.querySelector('[data-extdays]') as HTMLInputElement | null;
   const extBtn = c.querySelector('[data-extend]') as HTMLButtonElement | null;
   extEl?.addEventListener('input', () => {
@@ -642,7 +692,7 @@ function openAddSheet(): void {
     <div class="numrow">
       <div>
         <label class="flabel">1日の回数</label>
-        <input class="finput" type="number" data-per min="1" max="6" value="2" inputmode="numeric" />
+        <input class="finput" type="number" data-per min="1" max="6" value="1" inputmode="numeric" />
       </div>
       <div>
         <label class="flabel">日数</label>
