@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { dayRows, dayLabel, doseLabel, extendRegimen, isFinished, originalDays, progressCells, remaining, reviseRegimen, totalDays } from './calc';
-import type { Dose, Regimen } from './types';
+import { dayRows, dayLabel, doseLabel, extendRegimen, isFinished, originalDays, progressCells, remaining, reviseRegimen, sortDrugsByRecent, totalDays } from './calc';
+import type { Dose, DrugTemplate, Regimen } from './types';
 
 /** 1日2回 × 5日 = 全10回 の抗生剤。 */
 const reg: Regimen = {
@@ -163,5 +163,21 @@ describe('reviseRegimen', () => {
   it('実績より少なく直すと完了扱いになる', () => {
     const ds = [dose('d1', at(28, 8)), dose('d2', at(28, 20)), dose('d3', at(29, 8))];
     expect(isFinished(reviseRegimen(reg, 1, 2), ds)).toBe(true);
+  });
+});
+
+describe('sortDrugsByRecent', () => {
+  const tpl = (drug: string): DrugTemplate => ({ id: drug, drug, dosesPerDay: 1, days: 1 });
+  const used = (drug: string, day: number): Regimen => ({ ...reg, id: drug + day, drug, startedAt: at(day, 9) });
+
+  it('最後に処方を登録した薬が先頭に来る', () => {
+    const drugs = [tpl('A'), tpl('B'), tpl('C')];
+    const regs = [used('A', 1), used('B', 3), used('A', 2)];
+    expect(sortDrugsByRecent(drugs, regs).map((d) => d.drug)).toEqual(['B', 'A', 'C']);
+  });
+  it('未使用の薬は後ろに50音順', () => {
+    const drugs = [tpl('め'), tpl('あ'), tpl('か')];
+    const regs = [used('か', 1)];
+    expect(sortDrugsByRecent(drugs, regs).map((d) => d.drug)).toEqual(['か', 'あ', 'め']);
   });
 });

@@ -38,10 +38,25 @@ export interface Dose {
   at: number;
 }
 
+/**
+ * 薬の一覧（ひな形）。処方登録時に値を写し取るだけで、Regimen からは参照しない。
+ * 薬名で一意（1薬＝1ひな形）。
+ */
+export interface DrugTemplate {
+  id: string;
+  drug: string;
+  dose?: string;
+  note?: string;
+  dosesPerDay: number;
+  days: number;
+}
+
 export const MED_SCHEMA_VERSION = 1;
 
 export interface MedBackup {
   cats: Cat[];
   regimens: Regimen[];
   doses: Dose[];
+  /** 薬の一覧。これより前に書き出したファイルには存在しない。 */
+  drugs?: DrugTemplate[];
 }

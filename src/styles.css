@@ -474,7 +474,7 @@ body {
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.18s, transform 0.18s;
-  z-index: 20;
+  z-index: 40; /* シートを開いたまま出す取り消し（薬の一覧の削除）もシートの上に見せる */
 }
 .toast.show {
   opacity: 1;
@@ -844,6 +844,20 @@ body {
   margin: 8px 0;
   font-size: 16px;
   color: var(--text-sub);
+}
+.fcheck {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 16px 0 4px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+}
+.fcheck input {
+  width: 26px;
+  height: 26px;
+  accent-color: var(--tg-on-edge);
 }
 .numrow {
   display: grid;

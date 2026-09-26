@@ -1,8 +1,8 @@
 import '../styles.css';
 import { ROOMS, ROOM_LABEL, WEEK, genId, esc, type Room } from '../config';
 import { midnight, addDays, fmtTime, dayKey } from '../derive';
-import { dayRows, dayLabel, doseLabel, extendRegimen, isFinished, originalDays, progressCells, remaining, reviseRegimen, totalDays, type DayRow } from './calc';
-import type { Cat, Dose, Regimen } from './types';
+import { dayRows, dayLabel, doseLabel, extendRegimen, isFinished, originalDays, progressCells, remaining, reviseRegimen, sortDrugsByRecent, totalDays, type DayRow } from './calc';
+import type { Cat, Dose, DrugTemplate, Regimen } from './types';
 import * as med from './db';
 import * as careDb from '../db';
 import { exportBackup, validateBackup } from '../backup';
@@ -14,6 +14,7 @@ const today = midnight(new Date());
 let cats: Cat[] = [];
 let regimens: Regimen[] = [];
 let doses: Dose[] = [];
+let drugs: DrugTemplate[] = [];
 let offset = 0;
 
 function persist(p: Promise<unknown>): void {
@@ -649,7 +650,9 @@ function openAddSheet(): void {
   }
   const selected = new Set<string>();
   let activeRoom: Room = ROOMS[0];
+  let pickedDrug: string | null = null;
   const knownDrugs = Array.from(new Set(regimens.map((r) => r.drug))).sort();
+  const shelf = sortDrugsByRecent(drugs, regimens);
 
   const c = document.createElement('div');
   const paintCats = (): void => {
@@ -672,9 +675,25 @@ function openAddSheet(): void {
       (el as HTMLElement).dataset.on = String((el as HTMLElement).dataset.roomtab === activeRoom);
     });
   };
+  const paintShelf = (): void => {
+    c.querySelectorAll('[data-tpl]').forEach((el) => {
+      (el as HTMLElement).dataset.on = String(drugs.find((t) => t.id === (el as HTMLElement).dataset.tpl)?.drug === pickedDrug);
+    });
+    (c.querySelector('[data-manual]') as HTMLElement | null)?.setAttribute('data-on', String(pickedDrug === ''));
+  };
 
   c.innerHTML = `
     <h3>処方を登録</h3>
+    <label class="flabel">薬を選ぶ</label>
+    ${
+      shelf.length
+        ? `<div class="catbox">
+            ${shelf.map((t) => `<button class="catchip" data-tpl="${t.id}" data-on="false">${esc(t.drug)}</button>`).join('')}
+            <button class="catchip" data-manual data-on="false">＋ 一覧にない薬</button>
+          </div>`
+        : `<p class="fmeta">よく使う薬は、設定の「薬の一覧」に登録しておくとここから選べます。</p>`
+    }
+
     <label class="flabel">どの猫に</label>
     <div class="roomtabs">
       ${ROOMS.map((r) => `<button class="roomtab" data-roomtab="${r}" data-on="${r === activeRoom}">${ROOM_LABEL[r]}</button>`).join('')}
@@ -682,6 +701,97 @@ function openAddSheet(): void {
     <div class="catbox" data-catbox></div>
     <p class="selinfo" data-selinfo>選択中：なし</p>
 
+    ${drugFields(knownDrugs)}
+
+    <label class="fcheck"><input type="checkbox" data-savetpl /> この内容を薬の一覧に保存</label>
+
+    <div class="sheet-actions">
+      <button data-cancel>キャンセル</button>
+      <button class="primary" data-save>登録</button>
+    </div>`;
+
+  const close = openSheet(c);
+  paintCats();
+
+  const fields = bindDrugFields(c);
+
+  c.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    const tpl = target.closest('[data-tpl]') as HTMLElement | null;
+    if (tpl) {
+      const t = shelf.find((x) => x.id === tpl.dataset.tpl);
+      if (!t) return;
+      pickedDrug = t.drug;
+      fields.fill(t);
+      paintShelf();
+      return;
+    }
+    if (target.closest('[data-manual]')) {
+      pickedDrug = '';
+      fields.fill({ drug: '', dosesPerDay: 1, days: 5 });
+      paintShelf();
+      return;
+    }
+    const tab = target.closest('[data-roomtab]') as HTMLElement | null;
+    if (tab) {
+      activeRoom = tab.dataset.roomtab as Room;
+      paintCats();
+      return;
+    }
+    const pick = target.closest('[data-pick]') as HTMLElement | null;
+    if (pick) {
+      const id = pick.dataset.pick!;
+      if (selected.has(id)) selected.delete(id);
+      else selected.add(id);
+      paintCats();
+    }
+  });
+
+  c.querySelector('[data-cancel]')!.addEventListener('click', close);
+  c.querySelector('[data-save]')!.addEventListener('click', () => {
+    const v = fields.read();
+    if (selected.size === 0) {
+      alert('猫を1匹以上選んでください。');
+      return;
+    }
+    if (!v.drug) {
+      alert('薬の名前を入力してください。');
+      return;
+    }
+    const groupId = selected.size >= 2 ? genId() : undefined;
+    const created: Regimen[] = Array.from(selected).map((catId) => ({
+      id: genId(),
+      catId,
+      drug: v.drug,
+      dose: v.dose,
+      note: v.note,
+      dosesPerDay: v.dosesPerDay,
+      totalDoses: v.dosesPerDay * v.days,
+      startedAt: Date.now(),
+      status: 'active',
+      groupId,
+    }));
+    regimens.push(...created);
+    const tplBefore = (c.querySelector('[data-savetpl]') as HTMLInputElement).checked
+      ? upsertDrug(v)
+      : undefined;
+    close();
+    render();
+    for (const reg of created) persist(med.saveRegimen(reg));
+    showToast(`${created.length}件の処方を登録`, () => {
+      const ids = new Set(created.map((r) => r.id));
+      regimens = regimens.filter((r) => !ids.has(r.id));
+      for (const id of ids) persist(med.deleteRegimen(id));
+      if (tplBefore) tplBefore();
+    });
+  });
+}
+
+type DrugValues = Omit<DrugTemplate, 'id'>;
+
+/** 処方登録と薬の一覧の編集で共通の入力欄（薬名・用量・回数・日数・メモ）。 */
+function drugFields(knownDrugs: string[]): string {
+  return `
     <label class="flabel">薬の名前</label>
     <input class="finput" data-drug list="druglist" placeholder="例：アモキシシリン" />
     <datalist id="druglist">${knownDrugs.map((d) => `<option value="${esc(d)}"></option>`).join('')}</datalist>
@@ -702,81 +812,150 @@ function openAddSheet(): void {
     <p class="fmeta" data-total></p>
 
     <label class="flabel">メモ（任意）</label>
-    <textarea data-note placeholder="例：食後、ちゅ〜るに混ぜる"></textarea>
+    <textarea data-note placeholder="例：食後、ちゅ〜るに混ぜる"></textarea>`;
+}
 
-    <div class="sheet-actions">
-      <button data-cancel>キャンセル</button>
-      <button class="primary" data-save>登録</button>
-    </div>`;
-
-  const close = openSheet(c);
-  paintCats();
-
+function bindDrugFields(c: HTMLElement): { fill: (v: DrugValues) => void; read: () => DrugValues } {
+  const drugEl = c.querySelector('[data-drug]') as HTMLInputElement;
+  const dosageEl = c.querySelector('[data-dosage]') as HTMLInputElement;
   const perEl = c.querySelector('[data-per]') as HTMLInputElement;
   const daysEl = c.querySelector('[data-days]') as HTMLInputElement;
+  const noteEl = c.querySelector('[data-note]') as HTMLTextAreaElement;
   const totalEl = c.querySelector('[data-total]')!;
+  const read = (): DrugValues => ({
+    drug: drugEl.value.trim(),
+    dose: dosageEl.value.trim() || undefined,
+    note: noteEl.value.trim() || undefined,
+    dosesPerDay: Math.max(1, Number(perEl.value) || 1),
+    days: Math.max(1, Number(daysEl.value) || 1),
+  });
   const paintTotal = (): void => {
-    const per = Math.max(1, Number(perEl.value) || 1);
-    const days = Math.max(1, Number(daysEl.value) || 1);
+    const { dosesPerDay: per, days } = read();
     totalEl.textContent = `合計 ${per * days} 回ぶん（1日${per}回 × ${days}日）`;
   };
   perEl.addEventListener('input', paintTotal);
   daysEl.addEventListener('input', paintTotal);
   paintTotal();
+  return {
+    read,
+    fill(v) {
+      drugEl.value = v.drug;
+      dosageEl.value = v.dose ?? '';
+      perEl.value = String(v.dosesPerDay);
+      daysEl.value = String(v.days);
+      noteEl.value = v.note ?? '';
+      paintTotal();
+    },
+  };
+}
 
+/** 薬名が一致するひな形を上書き、なければ追加する。戻り値は元に戻す関数。 */
+function upsertDrug(v: DrugValues): () => void {
+  const prev = drugs.find((t) => t.drug === v.drug);
+  const next: DrugTemplate = { id: prev?.id ?? genId(), ...v };
+  drugs = prev ? drugs.map((t) => (t.id === prev.id ? next : t)) : [...drugs, next];
+  persist(med.saveDrug(next));
+  return () => {
+    drugs = prev ? drugs.map((t) => (t.id === prev.id ? prev : t)) : drugs.filter((t) => t.id !== next.id);
+    persist(prev ? med.saveDrug(prev) : med.deleteDrug(next.id));
+  };
+}
+
+// ---- 薬の一覧 ----
+function drugSummary(t: DrugTemplate): string {
+  return [t.dose, `1日${t.dosesPerDay}回×${t.days}日`, t.note].filter(Boolean).join('・');
+}
+
+function openDrugsSheet(): void {
+  const c = document.createElement('div');
+  const paint = (): void => {
+    const sorted = drugs.slice().sort((a, b) => a.drug.localeCompare(b.drug, 'ja'));
+    const list = sorted.length
+      ? sorted
+          .map(
+            (t) => `<div class="mrow mrow-flat" data-edittpl="${t.id}">
+              <span class="mrow-body">
+                <span class="mrow-main">${esc(t.drug)}</span>
+                <span class="mrow-prog">${esc(drugSummary(t))}</span>
+              </span>
+              <button class="xbtn" data-deltpl="${t.id}" aria-label="削除">✕</button>
+            </div>`,
+          )
+          .join('')
+      : `<p class="empty-hint">まだありません。<br>よく使う薬を登録しておくと、処方の登録で選べます。</p>`;
+    c.innerHTML = `
+      <h3>薬の一覧</h3>
+      <div class="glist">${list}</div>
+      <div class="sheet-actions" style="grid-template-columns:1fr">
+        <button class="primary" data-newtpl>＋ 薬を追加</button>
+        <button data-close>閉じる</button>
+      </div>`;
+  };
+  const close = openSheet(c);
+  paint();
   c.addEventListener('click', (e) => {
-    const tab = (e.target as HTMLElement).closest('[data-roomtab]') as HTMLElement | null;
-    if (tab) {
-      activeRoom = tab.dataset.roomtab as Room;
-      paintCats();
+    const target = e.target as HTMLElement;
+    const del = target.closest('[data-deltpl]') as HTMLElement | null;
+    if (del) {
+      const t = drugs.find((x) => x.id === del.dataset.deltpl);
+      if (!t) return;
+      drugs = drugs.filter((x) => x.id !== t.id);
+      persist(med.deleteDrug(t.id));
+      paint();
+      showToast(`${t.drug} を一覧から削除`, () => {
+        drugs.push(t);
+        persist(med.saveDrug(t));
+        paint();
+      });
       return;
     }
-    const pick = (e.target as HTMLElement).closest('[data-pick]') as HTMLElement | null;
-    if (pick) {
-      const id = pick.dataset.pick!;
-      if (selected.has(id)) selected.delete(id);
-      else selected.add(id);
-      paintCats();
+    const edit = target.closest('[data-edittpl]') as HTMLElement | null;
+    if (edit) {
+      close();
+      openDrugEditSheet(drugs.find((x) => x.id === edit.dataset.edittpl));
+      return;
     }
+    if (target.closest('[data-newtpl]')) {
+      close();
+      openDrugEditSheet();
+      return;
+    }
+    if (target.closest('[data-close]')) close();
   });
+}
 
-  c.querySelector('[data-cancel]')!.addEventListener('click', close);
+function openDrugEditSheet(tpl?: DrugTemplate): void {
+  const knownDrugs = Array.from(new Set(regimens.map((r) => r.drug))).sort();
+  const c = document.createElement('div');
+  c.innerHTML = `
+    <h3>${tpl ? '薬を編集' : '薬を追加'}</h3>
+    ${drugFields(knownDrugs)}
+    <div class="sheet-actions">
+      <button data-cancel>キャンセル</button>
+      <button class="primary" data-save>保存</button>
+    </div>`;
+  const close = openSheet(c);
+  const fields = bindDrugFields(c);
+  if (tpl) fields.fill(tpl);
+  const back = (): void => {
+    close();
+    openDrugsSheet();
+  };
+  c.querySelector('[data-cancel]')!.addEventListener('click', back);
   c.querySelector('[data-save]')!.addEventListener('click', () => {
-    const drug = (c.querySelector('[data-drug]') as HTMLInputElement).value.trim();
-    if (selected.size === 0) {
-      alert('猫を1匹以上選んでください。');
-      return;
-    }
-    if (!drug) {
+    const v = fields.read();
+    if (!v.drug) {
       alert('薬の名前を入力してください。');
       return;
     }
-    const per = Math.max(1, Number(perEl.value) || 1);
-    const days = Math.max(1, Number(daysEl.value) || 1);
-    const dosage = (c.querySelector('[data-dosage]') as HTMLInputElement).value.trim();
-    const note = (c.querySelector('[data-note]') as HTMLTextAreaElement).value.trim();
-    const groupId = selected.size >= 2 ? genId() : undefined;
-    const created: Regimen[] = Array.from(selected).map((catId) => ({
-      id: genId(),
-      catId,
-      drug,
-      dose: dosage || undefined,
-      note: note || undefined,
-      dosesPerDay: per,
-      totalDoses: per * days,
-      startedAt: Date.now(),
-      status: 'active',
-      groupId,
-    }));
-    regimens.push(...created);
-    close();
-    render();
-    for (const reg of created) persist(med.saveRegimen(reg));
-    showToast(`${created.length}件の処方を登録`, () => {
-      const ids = new Set(created.map((r) => r.id));
-      regimens = regimens.filter((r) => !ids.has(r.id));
-      for (const id of ids) persist(med.deleteRegimen(id));
-    });
+    if (drugs.some((t) => t.drug === v.drug && t.id !== tpl?.id)) {
+      alert(`${v.drug} はすでに一覧にあります。`);
+      return;
+    }
+    const next: DrugTemplate = { id: tpl?.id ?? genId(), ...v };
+    drugs = tpl ? drugs.map((t) => (t.id === tpl.id ? next : t)) : [...drugs, next];
+    persist(med.saveDrug(next));
+    back();
   });
 }
 
@@ -829,6 +1008,7 @@ function openSettings(): void {
     <h3>⚙️ 設定</h3>
     <div class="sheet-actions" style="grid-template-columns:1fr">
       <button data-cats>猫の登録・編集（${cats.length}匹）</button>
+      <button data-drugs>薬の一覧・編集（${drugs.length}件）</button>
       <button data-export>書き出し（JSON）</button>
       <button data-import>読み込み（全置換）</button>
       <button data-back>お世話アプリへ</button>
@@ -841,13 +1021,17 @@ function openSettings(): void {
     close();
     openCatsSheet();
   });
+  c.querySelector('[data-drugs]')!.addEventListener('click', () => {
+    close();
+    openDrugsSheet();
+  });
   c.querySelector('[data-back]')!.addEventListener('click', () => {
     location.href = '../';
   });
   c.querySelector('[data-export]')!.addEventListener('click', () => {
     void (async () => {
       const records = await careDb.loadRecords();
-      exportBackup(records, { cats, regimens, doses });
+      exportBackup(records, { cats, regimens, doses, drugs });
     })();
   });
   c.querySelector('[data-import]')!.addEventListener('click', () => {
@@ -927,6 +1111,7 @@ async function refreshFromDb(): Promise<void> {
   cats = all.cats;
   regimens = all.regimens;
   doses = all.doses;
+  drugs = all.drugs ?? [];
   render();
 }
 

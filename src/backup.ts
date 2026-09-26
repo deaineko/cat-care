@@ -103,5 +103,14 @@ function parseMed(raw: unknown): MedBackup | undefined | 'invalid' {
     const o = d as Record<string, unknown>;
     if (!str(o?.id) || !str(o?.regimenId) || typeof o?.at !== 'number') return 'invalid';
   }
+  if (m.drugs !== undefined) {
+    if (!Array.isArray(m.drugs)) return 'invalid';
+    for (const t of m.drugs) {
+      const o = t as Record<string, unknown>;
+      if (!str(o?.id) || !str(o?.drug)) return 'invalid';
+      if (typeof o.dosesPerDay !== 'number' || o.dosesPerDay < 1) return 'invalid';
+      if (typeof o.days !== 'number' || o.days < 1) return 'invalid';
+    }
+  }
   return m as unknown as MedBackup;
 }

@@ -117,4 +117,16 @@ describe('validateBackup：投薬データ（med）', () => {
     const bad = { ...medSample, doses: [{ id: 'd1', at: 2 }] };
     expect(validateBackup(envMed(bad)).ok).toBe(false);
   });
+
+  it('薬の一覧（drugs）つきも通り、中身がそのまま返る', () => {
+    const drugs = [{ id: 't1', drug: 'アモキシシリン', dose: '1/2錠', dosesPerDay: 2, days: 5 }];
+    const res = validateBackup(envMed({ ...medSample, drugs }));
+    expect(res.ok).toBe(true);
+    if (res.ok) expect(res.med?.drugs).toEqual(drugs);
+  });
+
+  it('日数の無い薬の一覧は拒否', () => {
+    const bad = { ...medSample, drugs: [{ id: 't1', drug: 'アモキシシリン', dosesPerDay: 2 }] };
+    expect(validateBackup(envMed(bad)).ok).toBe(false);
+  });
 });

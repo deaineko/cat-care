@@ -1,5 +1,5 @@
 import { dayKey, midnight } from '../derive';
-import type { Dose, Regimen } from './types';
+import type { Dose, DrugTemplate, Regimen } from './types';
 
 /** 全N日 = 総回数 ÷ 1日の回数。端数は切り上げ（最終日が半端でも1日と数える）。 */
 export function totalDays(reg: Regimen): number {
@@ -93,4 +93,14 @@ export function originalDays(reg: Regimen): number {
 export function reviseRegimen(reg: Regimen, dosesPerDay: number, days: number): Regimen {
   const extended = (reg.extensions ?? []).reduce((sum, e) => sum + e.days, 0);
   return { ...reg, dosesPerDay, totalDoses: dosesPerDay * (days + extended) };
+}
+
+/** 薬の一覧を「その薬名で最後に処方を登録した順」に並べる。未使用の薬は後ろに50音順。 */
+export function sortDrugsByRecent(drugs: DrugTemplate[], regimens: Regimen[]): DrugTemplate[] {
+  const last = new Map<string, number>();
+  for (const r of regimens) last.set(r.drug, Math.max(last.get(r.drug) ?? 0, r.startedAt));
+  return drugs.slice().sort((a, b) => {
+    const diff = (last.get(b.drug) ?? 0) - (last.get(a.drug) ?? 0);
+    return diff !== 0 ? diff : a.drug.localeCompare(b.drug, 'ja');
+  });
 }
