@@ -27,7 +27,7 @@ import { requestPersist } from './storage';
 import { exportBackup, validateBackup } from './backup';
 import { registerSW } from 'virtual:pwa-register';
 
-const today = midnight(new Date());
+let today = midnight(new Date());
 
 // ---- in-memory mirror of the DB (for synchronous rendering) ----
 let records: Rec[] = [];
@@ -523,8 +523,21 @@ const updateSW = registerSW({
 });
 
 // 別タブ・別ウィンドウでの更新を反映（同一端末内の整合）
-window.addEventListener('focus', () => {
+// iPhoneはPWAを閉じずに裏で保持するため、日をまたいで復帰しても起動時の「今日」のままになる
+function onResume(): void {
+  const now = midnight(new Date());
+  if (now.getTime() !== today.getTime()) {
+    today = now;
+    offset = 0;
+  }
   void init();
+}
+window.addEventListener('focus', onResume);
+window.addEventListener('pageshow', (e) => {
+  if (e.persisted) onResume();
+});
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') onResume();
 });
 
 if (import.meta.env.DEV) {
